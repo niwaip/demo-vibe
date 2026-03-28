@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DICT="${SCRIPT_DIR}/../../lib/dictionary.txt"
+
+# Parse flags
+ADD_WORD=""
+
+while getopts "d:a:" opt; do
+    case "$opt" in
+        d)
+            DICT="$OPTARG"
+            ;;
+        a)
+            ADD_WORD="$OPTARG"
+            ;;
+        \?)
+            echo "Usage: wp-spell-mismatch [-d DICT_FILE] [-a WORD]" >&2
+            exit 1
+            ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+# Handle -a flag: add word to dictionary and re-sort
+if [[ -n "$ADD_WORD" ]]; then
+    echo "$ADD_WORD" >> "$DICT"
+    sort -o "$DICT" "$DICT"
+    exit 0
+fi
+
+# Compare stdin against dictionary using comm
+# -2 suppresses lines only in dictionary
+# -3 suppresses lines in both
+# Output is lines only in stdin (misspellings)
+comm -23 - "$DICT"
