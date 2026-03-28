@@ -1,0 +1,192 @@
+#!/usr/bin/env bash
+# wp-stats - Document statistics tool
+# Reads from stdin or FILE and outputs statistics
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+STOPWORDS_FILE="${SCRIPT_DIR}/../lib/stopwords.txt"
+
+# Parse options
+OPT_WORD=0
+OPT_LINE=0
+OPT_CHAR=0
+OPT_SENTENCE=0
+OPT_PARAGRAPH=0
+OPT_FREQ=0
+OPT_AVG=0
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -w)
+            OPT_WORD=1
+            shift
+            ;;
+        -l)
+            OPT_LINE=1
+            shift
+            ;;
+        -c)
+            OPT_CHAR=1
+            shift
+            ;;
+        -s)
+            OPT_SENTENCE=1
+            shift
+            ;;
+        -p)
+            OPT_PARAGRAPH=1
+            shift
+            ;;
+        --freq)
+            OPT_FREQ="$2"
+            shift 2
+            ;;
+        --avg)
+            OPT_AVG=1
+            shift
+            ;;
+        -*)
+            echo "Unknown option: $1" >&2
+            exit 1
+            ;;
+        *)
+            # File argument
+            INPUT_FILE="$1"
+            shift
+            ;;
+    esac
+done
+
+# Count total flags set
+FLAG_COUNT=$((OPT_WORD + OPT_LINE + OPT_CHAR + OPT_SENTENCE + OPT_PARAGRAPH + (OPT_FREQ > 0 ? 1 : 0) + OPT_AVG))
+
+# Read input into a variable (to allow multiple passes)
+if [[ -n "${INPUT_FILE:-}" ]]; then
+    CONTENT=$(cat "$INPUT_FILE")
+else
+    CONTENT=$(cat)
+fi
+
+# Function to count words
+count_words() {
+    echo -n "$CONTENT" | wc -w | tr -d ' '
+}
+
+# Function to count lines
+count_lines() {
+    echo -n "$CONTENT" | wc -l | tr -d ' '
+}
+
+# Function to count characters
+count_chars() {
+    echo -n "$CONTENT" | wc -m | tr -d ' '
+}
+
+# Function to count sentences
+count_sentences() {
+    # Count occurrences of . ! or ? followed by whitespace or end of line
+    echo -n "$CONTENT" | grep -oE '[.!?](\s|$)' | wc -l | tr -d ' '
+}
+
+# Function to count paragraphs
+count_paragraphs() {
+    # Paragraphs are delimited by one or more blank lines
+    # Use mawk-compatible regex (avoid [[:space:]] and [^[:space:]])
+    echo -n "$CONTENT" | awk '
+BEGIN { p=1 }
+/^$/ { if (b == 0) { p++; b=1 } }
+/./ { b=0 }
+END { print p }
+'
+}
+
+# Function to get word frequency (top N non-stopwords)
+word_frequency() {
+    local n="$1"
+    echo -n "$CONTENT" | tr -cs 'A-Za-z' '\n' | tr 'A-Z' 'a-z' | grep -vFf "$STOPWORDS_FILE" | grep -v '^$' | sort | uniq -c | sort -rn | head -"$n" | awk '{printf "  %-20s %d\n", $2, $1}'
+}
+
+# Function to compute average word length
+avg_word_length() {
+    echo -n "$CONTENT" | tr -cs 'A-Za-z' '\n' | grep -v '^$' | awk '{ total += length($0); count++ } END { if (count > 0) printf "%.2f\n", total/count; else print "0.00" }'
+}
+
+# Function to compute average words per sentence
+avg_words_per_sentence() {
+    local words=$(count_words)
+    local sentences=$(count_sentences)
+    if [[ "$sentences" -eq 0 ]]; then
+        echo "0.00"
+    else
+        awk "BEGIN { printf \"%.2f\n\", $words / $sentences }"
+    fi
+}
+
+# Format number with thousands separator
+format_number() {
+    local num="$1"
+    printf "%'d" "$num"
+}
+
+# Output single stat as plain integer
+if [[ $FLAG_COUNT -eq 1 ]]; then
+    if [[ $OPT_WORD -eq 1 ]]; then
+        count_words
+    elif [[ $OPT_LINE -eq 1 ]]; then
+        count_lines
+    elif [[ $OPT_CHAR -eq 1 ]]; then
+        count_chars
+    elif [[ $OPT_SENTENCE -eq 1 ]]; then
+        count_sentences
+    elif [[ $OPT_PARAGRAPH -eq 1 ]]; then
+        count_paragraphs
+    elif [[ $OPT_FREQ -gt 0 ]]; then
+        word_frequency "$OPT_FREQ"
+    elif [[ $OPT_AVG -eq 1 ]]; then
+        echo "Avg word length: $(avg_word_length)"
+        echo "Avg words/sent:  $(avg_words_per_sentence)"
+    fi
+    exit 0
+fi
+
+# Full report or multiple stats
+if [[ $FLAG_COUNT -eq 0 ]] || [[ $FLAG_COUNT -gt 1 ]]; then
+    # Full report
+    echo "──────────────────────────────"
+    echo " Document Statistics"
+    echo "──────────────────────────────"
+
+    if [[ $OPT_LINE -eq 1 ]] || [[ $FLAG_COUNT -eq 0 ]]; then
+        printf " %-15s: %10s\n" "Lines" "$(format_number $(count_lines))"
+    fi
+
+    if [[ $OPT_WORD -eq 1 ]] || [[ $FLAG_COUNT -eq 0 ]]; then
+        printf " %-15s: %10s\n" "Words" "$(format_number $(count_words))"
+    fi
+
+    if [[ $OPT_CHAR -eq 1 ]] || [[ $FLAG_COUNT -eq 0 ]]; then
+        printf " %-15s: %10s\n" "Characters" "$(format_number $(count_chars))"
+    fi
+
+    if [[ $OPT_SENTENCE -eq 1 ]] || [[ $FLAG_COUNT -eq 0 ]]; then
+        printf " %-15s: %10s\n" "Sentences" "$(format_number $(count_sentences))"
+    fi
+
+    if [[ $OPT_PARAGRAPH -eq 1 ]] || [[ $FLAG_COUNT -eq 0 ]]; then
+        printf " %-15s: %10s\n" "Paragraphs" "$(format_number $(count_paragraphs))"
+    fi
+
+    if [[ $OPT_AVG -eq 1 ]] || [[ $FLAG_COUNT -eq 0 ]]; then
+        printf " %-15s: %10s\n" "Avg word length" "$(avg_word_length)"
+        printf " %-15s: %10s\n" "Avg words/sent" "$(avg_words_per_sentence)"
+    fi
+
+    if [[ $OPT_FREQ -gt 0 ]]; then
+        echo ""
+        echo "Top $OPT_FREQ words:"
+        word_frequency "$OPT_FREQ"
+    fi
+
+    echo "──────────────────────────────"
+fi
