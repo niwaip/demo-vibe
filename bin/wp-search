@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# wp-search - Search and replace filter for WP (Writing Pipeline)
+# Reads from stdin, applies substitution, writes to stdout, and commits
+
+# Source the common library
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/wp-common.sh"
+
+# Print usage information
+usage() {
+    cat <<EOF
+Usage: wp-search [OPTIONS] PATTERN REPLACEMENT
+
+A mutating filter that performs search and replace on document text.
+Reads from stdin, applies substitution, writes to stdout, and commits.
+
+Options:
+  -i       Case-insensitive matching
+  -g       Replace all occurrences per line (default behavior)
+  -n N     Replace only the Nth occurrence globally
+  -r       PATTERN is an extended regular expression (ERE)
+  -p       Preview mode: show a colored diff, do not commit
+
+Arguments:
+  PATTERN      The text or regex to search for
+  REPLACEMENT  The text to substitute in
+
+Note on -n N:
+  This replaces only the Nth occurrence per line, not globally.
+  For example, -n 2 replaces the 2nd match on each line.
+
+Examples:
+  wp-search "cat" "dog"          # Replace all 'cat' with 'dog'
+  wp-search -i "cat" "dog"       # Case-insensitive replace
+  wp-search -n 2 "cat" "dog"     # Replace only 2nd occurrence per line
+  wp-search -r '\\b(cat|dog)\\b' 'pet'  # Use ERE regex pattern
+EOF
+}
+
+# Escape pattern for use in sed with | delimiter
+# Extends wp_escape_sed to also escape | characters
+_escape_pattern() {
+    local str
+    str=$(wp_escape_sed "$1")
+    # Also escape | since we use it as the delimiter
+    str="${str//|/\\|}"
+    echo "$str"
+}
+
+# Parse options
+case_insensitive=false
+replace_all=true
+nth_occurrence=""
+use_ere=false
+preview_mode=false
+
+while getopts "ign:rph" opt; do
+    case "$opt" in
+        i)
+            case_insensitive=true
+            ;;
+        g)
+            replace_all=true
+            ;;
+        n)
+            replace_all=false
+            nth_occurrence="$OPTARG"
+            ;;
+        r)
+            use_ere=true
+            ;;
+        p)
+            preview_mode=true
+            ;;
+        h)
+            usage
+            exit 0
+            ;;
+        *)
+            usage >&2
+            exit 1
+            ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+# Check for required arguments
+if [[ $# -lt 2 ]]; then
+    wp_log ERR "PATTERN and REPLACEMENT are required"
+    usage >&2
+    exit 1
+fi
+
+PATTERN="$1"
+REPLACEMENT="$2"
+
+# Escape pattern and replacement for sed
+if [[ "$use_ere" == "false" ]]; then
+    # Literal mode: escape special characters
+    ESCAPED_PATTERN=$(_escape_pattern "$PATTERN")
+else
+    # ERE mode: pattern is used as-is, but escape | for our delimiter
+    ESCAPED_PATTERN="${PATTERN//|/\\|}"
+fi
+
+# Escape replacement (escape & and \ and | for sed replacement string)
+ESCAPED_REPLACEMENT="${REPLACEMENT//\\/\\\\}"
+ESCAPED_REPLACEMENT="${ESCAPED_REPLACEMENT//&/\\&}"
+ESCAPED_REPLACEMENT="${ESCAPED_REPLACEMENT//|/\\|}"
+
+# Build sed flags
+sed_flags=""
+if [[ "$replace_all" == "true" ]]; then
+    sed_flags="g"
+elif [[ -n "$nth_occurrence" ]]; then
+    sed_flags="$nth_occurrence"
+fi
+
+if [[ "$case_insensitive" == "true" ]]; then
+    sed_flags="${sed_flags}I"
+fi
+
+# Build sed expression
+sed_expr="s|${ESCAPED_PATTERN}|${ESCAPED_REPLACEMENT}|${sed_flags}"
+
+# Build sed command
+sed_cmd=("sed" "-E")
+if [[ "$use_ere" == "true" ]]; then
+    # ERE is already enabled with -E
+    :
+fi
+
+# Preview mode: show diff, don't commit
+if [[ "$preview_mode" == "true" ]]; then
+    # Create temp file for the result
+    TMPFILE=$(mktemp)
+    trap "rm -f $TMPFILE" EXIT
+
+    # Get current file
+    CURRENT_FILE=$(wp_current)
+
+    # Apply substitution to temp file
+    "${sed_cmd[@]}" "$sed_expr" < "$CURRENT_FILE" > "$TMPFILE"
+
+    # Show colored diff
+    diff --color=always "$CURRENT_FILE" "$TMPFILE"
+    exit $?
+fi
+
+# Normal mode: apply substitution and commit
+cat "$(wp_current)" | "${sed_cmd[@]}" "$sed_expr" | wp_commit
