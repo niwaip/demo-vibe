@@ -527,3 +527,56 @@ def monitor_workspaces():
             print(f"{ws.name}: {len(sessions)} sessions, status: {ws.status}")
         time.sleep(30)
 ```
+
+---
+
+## Harness Engineering 原则
+
+参考 OpenAI Harness Engineering 方法论：
+
+### 1. 机械化执行
+- 文档会腐烂，lint 规则不会
+- 验证阶段（VERIFY）作为不变量守护者
+- 错误信息内嵌修复指令 → 智能体可自我纠正
+
+```
+❌ 普通：Error: Test failed.
+✅ Harness：Error: Test test_login failed.
+           Fix: Check AUTH.md#login-flow for expected behavior.
+           Suggestion: Verify token expiration handling.
+```
+
+### 2. 熵管理 = 垃圾回收
+- 智能体会复现仓库中已有的模式——包括坏模式
+- ARCHIVE 阶段定期清理技术债
+- 技术债 = 高息贷款，小额持续偿还
+
+```
+品味的传播路径：
+人类审查评论 → 文档更新 → lint 规则 → 自动应用于所有代码
+```
+
+### 3. 吞吐量改变合并理念
+- PR 生命周期很短
+- 测试偶发失败通过后续重跑解决
+- 智能体吞吐量远超人类注意力时，这是正确选择
+
+### 4. 人类掌舵，智能体执行
+- 人类时间是最稀缺的资源
+- 出问题时，问：缺什么上下文/工具/约束？
+- 工程师角色：设计环境 → 拆解任务 → 验证结果
+
+### Ralph 循环原则
+| 信条 | 应用 |
+|------|------|
+| Fresh Context | 每个 Workspace 独立上下文 |
+| Disk Is State | 文件是交接机制，Git 是记忆 |
+| Let Ralph Ralph | 坐在循环上，不坐在循环里 |
+| Backpressure | 验证失败 = 门控拒绝 |
+
+### 关键数据参考
+OpenAI Harness Engineering 实践：
+- 3 人团队 → 5 个月 → ~100 万行代码 → ~1500 个 PR
+- 人均每天 3.5 个 PR
+- 单次运行可持续 6+ 小时（通常在人类睡眠时间）
+- 效率估算：约为手工编写的 1/10 时间

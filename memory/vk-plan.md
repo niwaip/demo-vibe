@@ -466,3 +466,37 @@ shellcheck bin/{module}
 ## 示例输出
 
 见项目中的 `.vibe-attachments/00-foundation.md` 到 `08-integration.md` 作为完整示例。
+
+---
+
+## Harness Engineering 原则
+
+参考 OpenAI Harness Engineering 方法论：
+
+### 1. 仓库即记录系统
+- 所有规划文档必须提交到 `memory/` 目录
+- 不在仓库里的东西，对智能体不存在
+- 决策、规范、计划都作为版本化工件
+
+### 2. 地图而非手册
+- MEMORY.md 保持 ~60 行
+- 渐进披露：从简洁入口指向详细文档
+- 巨型指令文件的死因：挤占上下文、无法维护、无法验证
+
+### 3. 智能体可读性
+- 选择"无聊"技术（API 稳定、训练集覆盖好）
+- 使用 Given/When/Then 格式（智能体容易理解）
+- 文件所有权明确（减少冲突概率）
+
+### 4. 约束越严，自主性越强
+- 限制解空间让 AI 更可靠
+- 文件所有权矩阵收窄解空间
+- 明确的格式规范减少猜测
+
+### Ralph 循环原则
+| 信条 | 应用 |
+|------|------|
+| Fresh Context | 每次读取文档，不依赖记忆 |
+| Backpressure | 门控拒绝坏结果，不规定怎么做 |
+| Plan Is Disposable | 计划可重新生成 |
+| Steer With Signals | 加路标，不加脚本 |

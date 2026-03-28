@@ -1,132 +1,62 @@
-# Vibe-Kanban 开发框架记忆
+# VK Framework 核心索引
 
-## ⚠️ 执行前检查清单
+> **60行规则**：本文件保持简洁，详细内容在各子文件中渐进披露。
 
-**每次开始任务前，必须确认以下检查项：**
+---
+
+## ⚡ 一句话理解
 
 ```
-□ 已读取 VK_IMPORT_GUIDE.md
-□ 已理解两技能分离设计
-□ 当前阶段：VK-Plan 还是 VK-Execute
-□ 如果 VK-Plan：
-    □ 可选：EXPLORE 探索想法
-    □ 需求细化追问至少3次
-    □ 输出风险与回滚计划
-    □ 使用 Given/When/Then 格式
-    □ 输出 OpenSpec 后自我确认
-    □ 等待用户确认
-□ 如果 VK-Execute：
-    □ 确认 Vibe-Kanban MCP 已连接
-    □ 所有任务独立（无父子关系）
-    □ 任务名称带阶段前缀
-    □ 可选：VERIFY 验证实现
-    □ 可选：ARCHIVE 归档变更
+传统工程：人类写代码 → 机器执行代码
+VK Framework：人类设计约束 → 智能体生成规格 → 智能体执行开发
 ```
 
 ---
 
-## 核心规则摘要
+## 两技能分离
 
-### Rule 1: 必须先理解框架
-读取所有 memory/*.md 文件
+| 技能 | 文件 | 触发 | 说明 |
+|------|------|------|------|
+| **VK-Plan** | `vk-plan.md` | 用户提出需求 | 需求细化 → 任务划分 → OpenSpec |
+| **VK-Execute** | `vk-execute.md` | 用户确认规划 | 创建 Issues → 启动 Workspaces |
 
-### Rule 2: 必须按顺序执行
-VK-Plan → 用户确认 → VK-Execute
+---
 
-### Rule 3: 需求细化提问 + 自我确认 + 用户确认
-- 至少3次追问（功能目标、输入输出、非功能需求）
-- 自我确认检查（任务独立性、命名规范、OpenSpec完整）
-- 等待用户明确确认
+## 核心规则
 
-### Rule 4: 检查 MCP 可用性
-VK-Execute 前调用 get_context
-
-### Rule 5: 任务独立性原则
-- ❌ 禁止：创建父子子任务（parent_issue_id）
-- ✅ 正确：所有任务独立，通过 relationship 设置依赖
-
-### Rule 6: 任务命名规范
-格式：`[阶段]-[功能名称]`
-阶段：Foundation / Core / Integration / Release
-
-### Rule 7: Given/When/Then 测试格式
-- **Given** 前置条件
-- **When** 用户操作
-- **Then** 预期结果
-
-### Rule 8: 风险与回滚
-每个 OpenSpec 必须包含风险评估和回滚计划
+1. **必须按顺序执行**：VK-Plan → 用户确认 → VK-Execute
+2. **需求细化3次追问**：功能目标 → 输入输出 → 非功能需求
+3. **任务独立原则**：禁止 parent_issue_id，使用 relationship
+4. **任务命名规范**：`[阶段]-[功能名称]`（Foundation/Core/Integration/Release）
+5. **Given/When/Then 格式**：测试场景标准格式
+6. **风险与回滚**：每个 OpenSpec 必须包含
 
 ---
 
 ## 流程阶段
 
 ```
-可选                必选                          可选
-──────────────────────────────────────────────────────────
 EXPLORE → REFINE → SPLIT → PLAN → [确认] → EXECUTE → VERIFY → ARCHIVE
-  │         │        │       │               │          │         │
-  │         │        │       │               │          │         └─ 归档变更
-  │         │        │       │               │          └─ 验证实现
-  │         │        │       │               └─ 执行开发
-  │         │        │       └─ 生成规格文档
-  │         │        └─ 划分任务批次
-  │         └─ 需求细化（3次追问）
-  └─ 探索想法
+  ↑可选                                                  ↑可选
 ```
 
 ---
 
-## 导入指南
+## 详细文档
 
-**新环境导入**：读取 `memory/VK_IMPORT_GUIDE.md`，AI Agent 可自动配置框架。
+| 文件 | 内容 |
+|------|------|
+| `VK_IMPORT_GUIDE.md` | 导入指南 + 强制规则详解 |
+| `vk-plan.md` | 规划技能完整文档 |
+| `vk-execute.md` | 执行技能完整文档 |
 
-## 两技能分离设计
+---
 
-| 技能 | 文件 | 依赖 | 用途 |
-|------|------|------|------|
-| **VK-Plan** | `memory/vk-plan.md` | 无 | 探索、需求细化、任务划分、规格生成 |
-| **VK-Execute** | `memory/vk-execute.md` | Vibe-Kanban MCP | 创建 Issues、启动 Workspaces、验证、归档 |
+## Harness Engineering 原则
 
-**执行顺序**：VK-Plan 完成并确认 → VK-Execute 开始
-
-## 分层架构
-
-```
-Layer 1: METHODOLOGY      ← 抽象流程定义（无执行依赖）
-Layer 2: SPECIFICATIONS   ← OpenSpec + Harness 模板
-Layer 3: ORCHESTRATION    ← 批次调度、依赖解析
-Layer 4: EXECUTION        ← Vibe-Kanban MCP 执行
-```
-
-## OpenSpec 模板要点
-
-每个任务规格必须包含：
-1. **Execution Order** - 执行顺序
-2. **Branch Isolation Rules** - 文件所有权
-3. **Objective** - 目标
-4. **Risk and Rollback** - 风险与回滚
-5. **Deliverables** - 交付物
-6. **Implementation** - 实现骨架
-7. **Test Cases (Given/When/Then)** - 测试场景
-8. **Acceptance Criteria** - 验收标准
-
-## Vibe-Kanban API 映射
-
-| 操作 | MCP API |
-|------|---------|
-| 创建任务 | `mcp__vibe_kanban__create_issue` |
-| 设置依赖 | `mcp__vibe_kanban__create_issue_relationship` |
-| 启动 workspace | `mcp__vibe_kanban__start_workspace` |
-| 执行开发 | `mcp__vibe_kanban__run_session_prompt` |
-| 更新状态 | `mcp__vibe_kanban__update_issue` |
-
-## Memory 文件清单
-
-```
-memory/
-├── MEMORY.md           ← 本文件（核心索引）
-├── VK_IMPORT_GUIDE.md  ← 导入指南（新环境配置）
-├── vk-plan.md          ← Skill 1: 规划技能（无依赖）
-├── vk-execute.md       ← Skill 2: 执行技能（依赖 MCP）
-```
+参考 OpenAI Harness Engineering：
+- **仓库即记录系统**：不在仓库里的东西，对智能体不存在
+- **地图而非手册**：渐进披露，从小入口开始
+- **机械化执行**：lint 错误 = 修复指令，不只报错
+- **熵管理**：技术债是高息贷款，持续小额偿还
+- **Fresh Context**：每次迭代清空上下文重新读取
