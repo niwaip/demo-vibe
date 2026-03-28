@@ -4,6 +4,38 @@
 
 ---
 
+## ⚠️ 强制规则
+
+```
+1. 本技能必须在 VK-Plan 完成且用户确认后执行
+2. 必须检查 Vibe-Kanban MCP 可用性
+3. 必须有完整的 OpenSpec 规格文档作为输入
+4. 禁止跳过任何 Batch 阶段
+```
+
+---
+
+## 前置条件检查
+
+**开始执行前，必须验证：**
+
+```python
+# 1. 检查 MCP 连接
+context = mcp__vibe_kanban__get_context()
+if context is None:
+    raise Error("Vibe-Kanban MCP 未连接，停止执行")
+
+# 2. 检查 VK-Plan 已完成
+if not has_openspec_documents():
+    raise Error("缺少 OpenSpec 规格文档，请先执行 VK-Plan")
+
+# 3. 检查用户已确认
+if not user_confirmed:
+    raise Error("用户未确认规划，请等待确认")
+```
+
+---
+
 ## 技能概述
 
 | 属性 | 值 |

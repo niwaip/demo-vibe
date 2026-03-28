@@ -1,5 +1,19 @@
 # Vibe-Kanban 开发框架记忆
 
+## ⚠️ 执行前检查清单
+
+**每次开始任务前，必须确认以下检查项：**
+
+```
+□ 已读取 VK_IMPORT_GUIDE.md
+□ 已理解两技能分离设计
+□ 当前阶段：VK-Plan 还是 VK-Execute
+□ 如果 VK-Plan：输出 OpenSpec 后等待用户确认
+□ 如果 VK-Execute：确认 Vibe-Kanban MCP 已连接
+```
+
+---
+
 ## 导入指南
 
 **新环境导入**：读取 `memory/VK_IMPORT_GUIDE.md`，AI Agent 可自动配置框架。

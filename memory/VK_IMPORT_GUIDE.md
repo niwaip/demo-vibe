@@ -1,5 +1,47 @@
 # VK Framework 导入指南
 
+## ⚠️ CRITICAL RULES（强制规则）
+
+**AI Agent 必须严格遵守以下规则，违反将导致流程失败：**
+
+### Rule 1: 必须先理解框架
+```
+在执行任何任务前，AI Agent 必须：
+1. 读取 memory/MEMORY.md
+2. 读取 memory/VK_IMPORT_GUIDE.md
+3. 读取 memory/vk-plan.md
+4. 读取 memory/vk-execute.md
+5. 确认理解两技能分离设计
+```
+
+### Rule 2: 必须按顺序执行
+```
+❌ 禁止：跳过 VK-Plan 直接执行 VK-Execute
+❌ 禁止：不生成 OpenSpec 就启动 Workspace
+❌ 禁止：不等待用户确认就调用 MCP
+
+✅ 正确流程：
+VK-Plan (REFINE → SPLIT → PLAN → 用户确认) → VK-Execute
+```
+
+### Rule 3: 必须等待用户确认
+```
+VK-Plan 完成后，必须输出：
+"规划完成，共 {N} 个任务。请确认是否开始执行？"
+
+等待用户明确回复"确认"后，才能进入 VK-Execute
+```
+
+### Rule 4: 检查 MCP 可用性
+```
+VK-Execute 开始前，必须：
+1. 检查 Vibe-Kanban MCP 是否连接
+2. 调用 mcp__vibe_kanban__get_context 确认环境
+3. 如 MCP 不可用，报告错误并停止
+```
+
+---
+
 AI Agent 读取此指南后，可自动配置 VK Framework 开发体系。
 
 ---
