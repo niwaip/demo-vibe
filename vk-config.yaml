@@ -1,0 +1,17 @@
+# VK Framework 项目配置
+
+# 项目上下文，注入到所有生成的文档中
+context: |
+  技术栈：Python, FastAPI, PostgreSQL
+  测试：pytest
+  代码风格：Black, isort
+
+# 规则配置
+rules:
+  openspec:
+    - 使用 Given/When/Then 格式编写场景
+    - 包含风险和回滚计划
+    - 文件所有权必须明确
+  verify:
+    - 代码覆盖率 >= 80%
+    - 所有测试场景通过

@@ -85,6 +85,37 @@ Agent（EXPLORE）：
 
 ## 执行流程
 
+### Phase 0: 项目配置确认
+
+**在 REFINE 之前，确认项目上下文**
+
+1. **读取项目配置**（如果存在 vk-config.yaml）
+2. **确认技术栈和环境**
+3. **输出配置摘要给用户确认**
+
+```markdown
+=== 项目配置确认 ===
+
+检测到 vk-config.yaml，当前项目上下文：
+
+技术栈：Python, FastAPI, PostgreSQL
+测试：pytest
+代码风格：Black, isort
+
+规则：
+- OpenSpec: Given/When/Then 格式
+- 验证: 代码覆盖率 >= 80%
+
+请确认是否使用此配置？
+- 确认：继续 VK-Plan
+- 修改：更新 vk-config.yaml
+- 跳过：使用默认配置
+```
+
+**如果没有 vk-config.yaml**：直接进入 REFINE 阶段。
+
+---
+
 ### Phase 1: REFINE（需求细化）
 
 **目标**：将模糊需求转化为清晰的功能点
