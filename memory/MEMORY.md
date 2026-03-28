@@ -1,65 +1,46 @@
 # Vibe-Kanban 开发框架记忆
 
-## 核心技能体系
+## 架构版本
 
-基于 OpenSpec + Harness 模式，设计了完整的开发流程技能：
+- **v1**: 原始技能文档（混合执行假设）
+- **v2**: 分层架构（方法论/规格/编排/适配器分离）
 
-| 阶段 | 技能 | 文件位置 |
-|------|------|---------|
-| 需求细化 | `/vk-refine` | `.vibe-attachments/skills/vk-refine.md` |
-| 任务划分 | `/vk-split` | `.vibe-attachments/skills/vk-split.md` |
-| 规划 | `/vk-plan` | `.vibe-attachments/skills/vk-plan.md` |
-| 开发 | `/vk-dev` | `.vibe-attachments/skills/vk-dev.md` |
-| 单体测试 | `/vk-test-unit` | `.vibe-attachments/skills/vk-test-unit.md` |
-| 集成测试 | `/vk-test-int` | `.vibe-attachments/skills/vk-test-int.md` |
-| 部署 | `/vk-deploy` | `.vibe-attachments/skills/vk-deploy.md` |
-| 自动流程 | `/vk-auto` | `.vibe-attachments/skills/vk-auto.md` |
-
-## 快速参考
-
-`.vibe-attachments/VK_QUICK_REF.md` 包含所有技能的速查表。
-
-## OpenSpec 规格格式
-
-每个任务规格包含：
-- Execution Order（执行顺序）
-- Branch Isolation Rules（文件所有权）
-- Objective（目标）
-- Deliverables（交付物）
-- Implementation（实现骨架）
-- Test Cases（测试用例）
-- Acceptance Criteria（验收标准）
-
-## Harness 测试框架
-
-核心函数：
-- `assert_eq DESCRIPTION EXPECTED ACTUAL`
-- `assert_contains DESCRIPTION HAYSTACK NEEDLE`
-- `assert_exit_code DESCRIPTION EXPECTED ACTUAL`
-- `run_tests` 汇总并返回退出码
-
-## 并行执行策略
+## 分层架构
 
 ```
-Batch 0: Foundation（先行，必须完成）
-    ↓
-Batch 1: Core Features（并行，可同时执行）
-    ↓
-Batch 2: Integration（整合，依赖Batch 1）
-    ↓
-Batch 3: Release（发布）
+Layer 1: METHODOLOGY      ← 抽象流程定义（无执行依赖）
+Layer 2: SPECIFICATIONS   ← OpenSpec + Harness 模板
+Layer 3: ORCHESTRATION    ← 批次调度、依赖解析
+Layer 4: EXECUTION ADAPTERS ← Claude Code / Vibe-Kanban 适配
 ```
 
-## 文件所有权原则
+## 适配器
 
-每个任务必须明确：
-- READ-ONLY：可读不可写
-- OWNED：完全控制
-- FORBIDDEN：禁止访问
+| 适配器 | 文件 | 执行方式 |
+|--------|------|---------|
+| Claude Code | `.vibe-attachments/adapters/claude_code.md` | Skill/Prompt 指导 |
+| Vibe-Kanban | `.vibe-attachments/adapters/vibe_kanban.md` | MCP API 调用 |
+
+## 技能文档位置
+
+`.vibe-attachments/skills/*.md` - 8个阶段技能
+
+## 重构指导
+
+见 `.vibe-attachments/VK_ARCHITECTURE_V2.md` 详细架构设计。
+
+## Vibe-Kanban API 映射
+
+| 操作 | MCP API |
+|------|---------|
+| 创建任务 | `mcp__vibe_kanban__create_issue` |
+| 设置依赖 | `mcp__vibe_kanban__create_issue_relationship` |
+| 启动 workspace | `mcp__vibe_kanban__start_workspace` |
+| 执行开发 | `mcp__vibe_kanban__run_session_prompt` |
+| 更新状态 | `mcp__vibe_kanban__update_issue` |
 
 ## 使用方式
 
-用户提出需求时：
-1. 简单需求 → `/vk-auto B "需求"`
-2. 复杂需求 → 分阶段执行 `/vk-refine` → `/vk-split` → `/vk-plan` → `/vk-dev` → `/vk-test` → `/vk-deploy`
-3. 紧急修复 → `/vk-auto A "修复描述"`
+1. 简单任务 → Claude Code Adapter (纯 Skill 模式)
+2. 复杂并行任务 → Vibe-Kanban Adapter (Workspace 并行)
+3. 混合模式 → 规划用 Claude Code，开发用 Vibe-Kanban workspace
