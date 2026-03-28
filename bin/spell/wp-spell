@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DICT="${SCRIPT_DIR}/../../lib/dictionary.txt"
+
+# Parse flags
+ADD_WORD=""
+COUNT_MODE=false
+NO_COMMIT=false
+
+while getopts "d:a:-:" opt; do
+    case "$opt" in
+        d)
+            DICT="$OPTARG"
+            ;;
+        a)
+            ADD_WORD="$OPTARG"
+            ;;
+        -)
+            case "${OPTARG}" in
+                count)
+                    COUNT_MODE=true
+                    ;;
+                no-commit)
+                    NO_COMMIT=true
+                    ;;
+                *)
+                    echo "Usage: wp-spell [-d DICT_FILE] [-a WORD] [--count] [--no-commit] [FILE]" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        \?)
+            echo "Usage: wp-spell [-d DICT_FILE] [-a WORD] [--count] [--no-commit] [FILE]" >&2
+            exit 1
+            ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+# Handle -a flag: add word to dictionary and re-sort
+if [[ -n "$ADD_WORD" ]]; then
+    echo "$ADD_WORD" | tr 'A-Z' 'a-z' >> "$DICT"
+    sort -o "$DICT" "$DICT"
+    echo "Added '${ADD_WORD}' to dictionary"
+    exit 0
+fi
+
+# Resolve input source
+INPUT="${1:-}"
+SOURCE=""
+PIPE_INPUT=false
+
+if [[ -n "$INPUT" ]]; then
+    # Explicit file provided
+    if [[ ! -f "$INPUT" ]]; then
+        echo "File not found: ${INPUT}" >&2
+        exit 1
+    fi
+    SOURCE="$INPUT"
+else
+    # Try session/current
+    source "${SCRIPT_DIR}/../../lib/wp-common.sh"
+    if [[ -d "$(wp_session_dir)" ]]; then
+        SOURCE="$(wp_current)"
+    else
+        # No session and no file - check if stdin has data
+        if [[ -t 0 ]]; then
+            # stdin is terminal (no piped input)
+            echo "No active session. Provide a FILE or pipe input." >&2
+            exit 1
+        fi
+        PIPE_INPUT=true
+    fi
+fi
+
+# Build the pipeline function
+run_pipeline() {
+    if [[ "$PIPE_INPUT" == "true" ]]; then
+        cat
+    else
+        cat "$SOURCE"
+    fi \
+        | "${SCRIPT_DIR}/wp-spell-words" \
+        | "${SCRIPT_DIR}/wp-spell-lower" \
+        | sort \
+        | "${SCRIPT_DIR}/wp-spell-unique" \
+        | "${SCRIPT_DIR}/wp-spell-mismatch" -d "$DICT"
+}
+
+# Handle --count mode
+if [[ "$COUNT_MODE" == "true" ]]; then
+    RESULT=$(run_pipeline | wc -l | tr -d ' ')
+    echo "$RESULT"
+    exit 0
+fi
+
+# Normal mode: output misspelled words
+run_pipeline

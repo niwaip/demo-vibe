@@ -154,11 +154,23 @@ cmd_status() {
 
 # wp clean - Removes the entire session/ directory after prompting for confirmation
 cmd_clean() {
+    local force=false
+
+    if [[ "${1:-}" == "--force" ]]; then
+        force=true
+    fi
+
     local session_dir
     session_dir=$(wp_session_dir)
 
     if [[ ! -d "$session_dir" ]]; then
         wp_log INFO "No session to clean."
+        return 0
+    fi
+
+    if [[ "$force" == "true" ]]; then
+        rm -rf "$session_dir"
+        wp_log INFO "Session cleaned."
         return 0
     fi
 

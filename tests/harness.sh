@@ -65,6 +65,24 @@ assert_exit_code() {
     fi
 }
 
+# assert_not_contains DESCRIPTION HAYSTACK NEEDLE
+# Passes if NEEDLE is NOT a substring of HAYSTACK
+assert_not_contains() {
+    local description="$1"
+    local haystack="$2"
+    local needle="$3"
+
+    if [[ "$haystack" != *"$needle"* ]]; then
+        echo "PASS: ${description}"
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+    else
+        echo "FAIL: ${description}"
+        echo "Expected NOT to find: ${needle}"
+        echo "In: ${haystack}"
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+    fi
+}
+
 # report
 # Prints summary: Results: X passed, Y failed
 # Exits with code 0 if all passed, 1 if any failed
