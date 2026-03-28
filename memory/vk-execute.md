@@ -409,8 +409,94 @@ mcp__vibe_kanban__update_issue(
 - ✅ 所有 Batch 执行完成
 - ✅ Issues 状态已更新
 - ✅ 执行报告已生成
+- ✅ 验证阶段完成（可选）
 
-**下一步**：部署流程（可选，由用户决定）
+**下一步**：VERIFY 验证 → ARCHIVE 归档 → 部署流程（可选）
+
+---
+
+## 可选阶段：VERIFY（验证实现）
+
+**参考 OpenSpec /opsx:verify**
+
+在所有任务完成后，验证实现是否符合文档：
+
+```markdown
+## 验证检查
+
+### 功能验证
+- [ ] 所有 Given/When/Then 场景已测试
+- [ ] 边界条件已覆盖
+- [ ] 异常处理正确
+
+### 代码质量
+- [ ] 静态检查通过（shellcheck/lint）
+- [ ] 测试覆盖率达标
+- [ ] 无明显性能问题
+
+### 规范符合
+- [ ] 文件所有权规则已遵守
+- [ ] 代码风格符合项目规范
+- [ ] 文档已更新
+
+### 验证结果
+✅ 验证通过，所有实现符合文档要求
+或
+❌ 验证失败，需要修复：{问题列表}
+```
+
+---
+
+## 可选阶段：ARCHIVE（归档）
+
+**参考 OpenSpec /opsx:archive**
+
+功能完成后，归档变更记录：
+
+```markdown
+## 归档操作
+
+1. 创建归档目录：
+   openspec/archive/{日期}-{变更名称}/
+
+2. 移动文档：
+   - proposal.md
+   - specs/
+   - design.md
+   - tasks.md
+   - 验证报告
+
+3. 更新主规范（如有增量变更）
+
+4. 关闭相关 Issues
+```
+
+---
+
+## 项目上下文配置
+
+**参考 OpenSpec context 注入**
+
+在项目根目录创建配置文件，注入到所有文档：
+
+```yaml
+# vk-config.yaml
+context: |
+  技术栈：TypeScript, React, Node.js
+  API 约定：RESTful, JSON 响应
+  测试：Vitest 单元测试，Playwright e2e
+  代码风格：ESLint + Prettier, 严格 TypeScript
+  部署：自动 CI/CD
+
+rules:
+  openspec:
+    - 使用 Given/When/Then 格式编写场景
+    - 包含风险和回滚计划
+    - 文件所有权必须明确
+  verify:
+    - 代码覆盖率 >= 80%
+    - 所有测试场景通过
+```
 
 ---
 

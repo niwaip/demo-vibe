@@ -9,13 +9,18 @@
 □ 已理解两技能分离设计
 □ 当前阶段：VK-Plan 还是 VK-Execute
 □ 如果 VK-Plan：
+    □ 可选：EXPLORE 探索想法
     □ 需求细化追问至少3次
+    □ 输出风险与回滚计划
+    □ 使用 Given/When/Then 格式
     □ 输出 OpenSpec 后自我确认
     □ 等待用户确认
 □ 如果 VK-Execute：
     □ 确认 Vibe-Kanban MCP 已连接
     □ 所有任务独立（无父子关系）
     □ 任务名称带阶段前缀
+    □ 可选：VERIFY 验证实现
+    □ 可选：ARCHIVE 归档变更
 ```
 
 ---
@@ -44,6 +49,32 @@ VK-Execute 前调用 get_context
 格式：`[阶段]-[功能名称]`
 阶段：Foundation / Core / Integration / Release
 
+### Rule 7: Given/When/Then 测试格式
+- **Given** 前置条件
+- **When** 用户操作
+- **Then** 预期结果
+
+### Rule 8: 风险与回滚
+每个 OpenSpec 必须包含风险评估和回滚计划
+
+---
+
+## 流程阶段
+
+```
+可选                必选                          可选
+──────────────────────────────────────────────────────────
+EXPLORE → REFINE → SPLIT → PLAN → [确认] → EXECUTE → VERIFY → ARCHIVE
+  │         │        │       │               │          │         │
+  │         │        │       │               │          │         └─ 归档变更
+  │         │        │       │               │          └─ 验证实现
+  │         │        │       │               └─ 执行开发
+  │         │        │       └─ 生成规格文档
+  │         │        └─ 划分任务批次
+  │         └─ 需求细化（3次追问）
+  └─ 探索想法
+```
+
 ---
 
 ## 导入指南
@@ -54,8 +85,8 @@ VK-Execute 前调用 get_context
 
 | 技能 | 文件 | 依赖 | 用途 |
 |------|------|------|------|
-| **VK-Plan** | `memory/vk-plan.md` | 无 | 需求细化、任务划分、规格生成 |
-| **VK-Execute** | `memory/vk-execute.md` | Vibe-Kanban MCP | 创建 Issues、启动 Workspaces |
+| **VK-Plan** | `memory/vk-plan.md` | 无 | 探索、需求细化、任务划分、规格生成 |
+| **VK-Execute** | `memory/vk-execute.md` | Vibe-Kanban MCP | 创建 Issues、启动 Workspaces、验证、归档 |
 
 **执行顺序**：VK-Plan 完成并确认 → VK-Execute 开始
 
@@ -67,6 +98,18 @@ Layer 2: SPECIFICATIONS   ← OpenSpec + Harness 模板
 Layer 3: ORCHESTRATION    ← 批次调度、依赖解析
 Layer 4: EXECUTION        ← Vibe-Kanban MCP 执行
 ```
+
+## OpenSpec 模板要点
+
+每个任务规格必须包含：
+1. **Execution Order** - 执行顺序
+2. **Branch Isolation Rules** - 文件所有权
+3. **Objective** - 目标
+4. **Risk and Rollback** - 风险与回滚
+5. **Deliverables** - 交付物
+6. **Implementation** - 实现骨架
+7. **Test Cases (Given/When/Then)** - 测试场景
+8. **Acceptance Criteria** - 验收标准
 
 ## Vibe-Kanban API 映射
 
