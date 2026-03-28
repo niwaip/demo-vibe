@@ -1,9 +1,17 @@
 # Vibe-Kanban 开发框架记忆
 
-## 架构版本
+## 导入指南
 
-- **v1**: 原始技能文档（混合执行假设）
-- **v2**: 分层架构（方法论/规格/编排/适配器分离）
+**新环境导入**：读取 `memory/VK_IMPORT_GUIDE.md`，AI Agent 可自动配置框架。
+
+## 两技能分离设计
+
+| 技能 | 文件 | 依赖 | 用途 |
+|------|------|------|------|
+| **VK-Plan** | `memory/vk-plan.md` | 无 | 需求细化、任务划分、规格生成 |
+| **VK-Execute** | `memory/vk-execute.md` | Vibe-Kanban MCP | 创建 Issues、启动 Workspaces |
+
+**执行顺序**：VK-Plan 完成并确认 → VK-Execute 开始
 
 ## 分层架构
 
@@ -11,23 +19,8 @@
 Layer 1: METHODOLOGY      ← 抽象流程定义（无执行依赖）
 Layer 2: SPECIFICATIONS   ← OpenSpec + Harness 模板
 Layer 3: ORCHESTRATION    ← 批次调度、依赖解析
-Layer 4: EXECUTION ADAPTERS ← Claude Code / Vibe-Kanban 适配
+Layer 4: EXECUTION        ← Vibe-Kanban MCP 执行
 ```
-
-## 适配器
-
-| 适配器 | 文件 | 执行方式 |
-|--------|------|---------|
-| Claude Code | `.vibe-attachments/adapters/claude_code.md` | Skill/Prompt 指导 |
-| Vibe-Kanban | `.vibe-attachments/adapters/vibe_kanban.md` | MCP API 调用 |
-
-## 技能文档位置
-
-`.vibe-attachments/skills/*.md` - 8个阶段技能
-
-## 重构指导
-
-见 `.vibe-attachments/VK_ARCHITECTURE_V2.md` 详细架构设计。
 
 ## Vibe-Kanban API 映射
 
@@ -39,8 +32,12 @@ Layer 4: EXECUTION ADAPTERS ← Claude Code / Vibe-Kanban 适配
 | 执行开发 | `mcp__vibe_kanban__run_session_prompt` |
 | 更新状态 | `mcp__vibe_kanban__update_issue` |
 
-## 使用方式
+## Memory 文件清单
 
-1. 简单任务 → Claude Code Adapter (纯 Skill 模式)
-2. 复杂并行任务 → Vibe-Kanban Adapter (Workspace 并行)
-3. 混合模式 → 规划用 Claude Code，开发用 Vibe-Kanban workspace
+```
+memory/
+├── MEMORY.md           ← 本文件（核心索引）
+├── VK_IMPORT_GUIDE.md  ← 导入指南（新环境配置）
+├── vk-plan.md          ← Skill 1: 规划技能（无依赖）
+├── vk-execute.md       ← Skill 2: 执行技能（依赖 MCP）
+```
