@@ -11,6 +11,8 @@
 2. 必须检查 Vibe-Kanban MCP 可用性
 3. 必须有完整的 OpenSpec 规格文档作为输入
 4. 禁止跳过任何 Batch 阶段
+5. 所有 Issue 必须独立创建，不使用 parent_issue_id
+6. Issue 标题必须使用阶段前缀命名
 ```
 
 ---
@@ -32,6 +34,11 @@ if not has_openspec_documents():
 # 3. 检查用户已确认
 if not user_confirmed:
     raise Error("用户未确认规划，请等待确认")
+
+# 4. 检查任务独立性
+for task in tasks:
+    if task.has_parent:
+        raise Error(f"任务 {task.id} 有父子关系，请修改为独立任务")
 ```
 
 ---
@@ -152,13 +159,48 @@ for task in tasks:
 
 #### Issue 创建模板
 
+**独立任务命名格式**：`[阶段]-[功能名称]`
+
 ```json
+// 正确示例：独立任务，带阶段前缀
 {
-  "title": "T00: Foundation - Test Harness",
-  "description": "# T00 — Foundation\n\n## Execution Order\n**RUN_FIRST**\n\n...\n\n{完整 OpenSpec 内容}",
+  "title": "Foundation-TestHarness",
+  "description": "# Foundation-TestHarness\n\n## Execution Order\n**RUN_FIRST**\n\n...\n\n{完整 OpenSpec 内容}",
   "priority": "urgent",
   "project_id": "{project_uuid}"
+  // 注意：不设置 parent_issue_id
 }
+
+{
+  "title": "Core-SpellWords",
+  "description": "# Core-SpellWords\n\n## Execution Order\n**RUN_PARALLEL**\n\n...",
+  "priority": "high"
+}
+
+{
+  "title": "Integration-FullPipeline",
+  "description": "# Integration-FullPipeline\n\n## Execution Order\n**RUN_AFTER: [Core-SpellWords, Core-SpellLower]**\n\n...",
+  "priority": "high"
+}
+```
+
+**❌ 禁止做法**：
+```json
+// 错误：使用父子关系
+{
+  "title": "子任务：实现登录",
+  "parent_issue_id": "xxx"  // 禁止使用
+}
+```
+
+**依赖关系通过 create_issue_relationship 设置**：
+```python
+# 设置依赖：Core-SpellWords 依赖 Foundation-TestHarness
+mcp__vibe_kanban__create_issue_relationship(
+    issue_id=core_spell_words_issue_id,
+    related_issue_id=foundation_issue_id,
+    relationship_type="blocking"  # 阻塞关系
+)
 ```
 
 ---

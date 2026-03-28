@@ -24,12 +24,32 @@
 VK-Plan (REFINE → SPLIT → PLAN → 用户确认) → VK-Execute
 ```
 
-### Rule 3: 必须等待用户确认
+### Rule 3: 需求细化提问 + 自我确认 + 用户确认
 ```
-VK-Plan 完成后，必须输出：
-"规划完成，共 {N} 个任务。请确认是否开始执行？"
+VK-Plan REFINE 阶段，必须：
+1. 对用户需求进行细化提问，至少 3 次追问
+2. 每次追问聚焦不同维度：
+   - 第1次：功能目标和使用场景
+   - 第2次：输入输出和边界条件
+   - 第3次：性能安全和兼容性
 
-等待用户明确回复"确认"后，才能进入 VK-Execute
+VK-Plan 完成后，必须：
+1. 先进行自我整体确认检查：
+   - 检查所有任务是否独立（不创建子任务）
+   - 检查任务名称是否带有阶段信息
+   - 检查 OpenSpec 格式是否完整
+   - 检查文件所有权矩阵是否无冲突
+
+2. 输出确认报告：
+   "自我确认完成：
+   - 共 {N} 个独立任务
+   - 任务命名格式：[阶段]-[功能名称]
+   - 所有 OpenSpec 格式完整
+   - 文件所有权无冲突
+
+   请确认是否开始执行？"
+
+3. 等待用户明确回复"确认"后，才能进入 VK-Execute
 ```
 
 ### Rule 4: 检查 MCP 可用性
@@ -38,6 +58,38 @@ VK-Execute 开始前，必须：
 1. 检查 Vibe-Kanban MCP 是否连接
 2. 调用 mcp__vibe_kanban__get_context 确认环境
 3. 如 MCP 不可用，报告错误并停止
+```
+
+### Rule 5: 任务独立性原则
+```
+❌ 禁止：创建父子关系的子任务（parent_issue_id）
+❌ 禁止：任务嵌套或层级依赖
+
+✅ 正确做法：
+- 所有任务都是独立的 Issue
+- 任务之间通过 create_issue_relationship 设置依赖
+- 依赖类型使用 "blocking"（阻塞关系）
+- 每个任务可以独立分配到不同 Workspace
+```
+
+### Rule 6: 任务命名规范
+```
+任务名称必须包含阶段信息，格式：
+[阶段]-[功能名称]
+
+示例：
+- Foundation-TestHarness
+- Core-SpellWords
+- Core-SpellLower
+- Core-SpellUnique
+- Integration-FullPipeline
+- Release-DocUpdate
+
+阶段标识：
+- Foundation: 基础设施
+- Core: 核心功能
+- Integration: 整合层
+- Release: 发布准备
 ```
 
 ---

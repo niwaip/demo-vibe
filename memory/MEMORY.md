@@ -8,9 +8,41 @@
 □ 已读取 VK_IMPORT_GUIDE.md
 □ 已理解两技能分离设计
 □ 当前阶段：VK-Plan 还是 VK-Execute
-□ 如果 VK-Plan：输出 OpenSpec 后等待用户确认
-□ 如果 VK-Execute：确认 Vibe-Kanban MCP 已连接
+□ 如果 VK-Plan：
+    □ 需求细化追问至少3次
+    □ 输出 OpenSpec 后自我确认
+    □ 等待用户确认
+□ 如果 VK-Execute：
+    □ 确认 Vibe-Kanban MCP 已连接
+    □ 所有任务独立（无父子关系）
+    □ 任务名称带阶段前缀
 ```
+
+---
+
+## 核心规则摘要
+
+### Rule 1: 必须先理解框架
+读取所有 memory/*.md 文件
+
+### Rule 2: 必须按顺序执行
+VK-Plan → 用户确认 → VK-Execute
+
+### Rule 3: 需求细化提问 + 自我确认 + 用户确认
+- 至少3次追问（功能目标、输入输出、非功能需求）
+- 自我确认检查（任务独立性、命名规范、OpenSpec完整）
+- 等待用户明确确认
+
+### Rule 4: 检查 MCP 可用性
+VK-Execute 前调用 get_context
+
+### Rule 5: 任务独立性原则
+- ❌ 禁止：创建父子子任务（parent_issue_id）
+- ✅ 正确：所有任务独立，通过 relationship 设置依赖
+
+### Rule 6: 任务命名规范
+格式：`[阶段]-[功能名称]`
+阶段：Foundation / Core / Integration / Release
 
 ---
 
